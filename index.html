@@ -259,7 +259,7 @@
                 draggedElement.draggable = false;
                 ev.currentTarget.querySelector('.word-container').appendChild(draggedElement);
                 wordsLeft--;
-                if (wordsLeft === 0) setTimeout(showEndScreen, 3000);
+                if (wordsLeft === 0) setTimeout(showEndScreen, 5000);
             } else {
                 draggedElement.classList.add('wrong');
                 setTimeout(() => {
