@@ -1,0 +1,125 @@
+
+<script>
+    // Η "Τεράστια Δεξαμενή" Λέξεων
+    const masterNouns = [
+        "σκύλος", "δέντρο", "σπίτι", "θάλασσα", "παιδί", "βιβλίο", "ουρανός", "γάτα", "ήλιος", 
+        "λουλούδι", "σχολείο", "μολύβι", "φαγητό", "νερό", "κήπος", "βουνό", "ποτάμι", "νησί",
+        "γιαγιά", "φίλος", "αμάξι", "μπάλα", "δάσκαλος", "πίνακας", "καρέκλα", "τραπέζι", "πόρτα",
+        "αστέρι", "φεγγάρι", "σύννεφο", "δρόμος", "πόλη", "χωριό", "παππούς", "αδελφός", "μαμά",
+        "μπαμπάς", "δάσος", "λιοντάρι", "πουλί", "ψάρι", "καράβι", "αεροπλάνο", "υπολογιστής",
+        "τηλέφωνο", "τσάντα", "παπούτσι", "καπέλο", "μήλο", "πορτοκάλι", "ψωμί", "τυρί", "γέλιο"
+    ];
+    
+    const masterAdjectives = [
+        "όμορφος", "ψηλός", "μεγάλο", "γαλάζια", "έξυπνο", "κόκκινο", "σκοτεινός", "μικρή", "λαμπερός", 
+        "μυρωδάτο", "καινούριο", "ξύλινο", "νόστιμο", "δροσερό", "πράσινος", "άγριο", "ορμητικό", "μακρινό",
+        "γλυκιά", "πιστός", "γρήγορο", "στρογγυλή", "αυστηρός", "καθαρός", "άνετη", "στρωμένο", "ανοιχτή",
+        "φωτεινό", "ασημένιο", "άσπρο", "φαρδύς", "πολύχρωμη", "ήσυχο", "καλός", "δυνατός", "στοργική",
+        "εργατικός", "πυκνό", "τρομακτικό", "μικρό", "χρωματιστό", "πελώριο", "μοντέρνο", "ψηφιακό",
+        "βαρύ", "δερμάτινο", "ψάθινο", "ζουμερό", "γλυκό", "φρέσκο", "αλμυρό", "χαρούμενο"
+    ];
+
+    let wordsLeft = 0;
+
+    function startGame() {
+        document.getElementById('start-screen').classList.remove('active');
+        document.getElementById('end-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.add('active');
+        generateRound();
+    }
+
+    function generateRound() {
+        const pool = document.getElementById('words-pool');
+        pool.innerHTML = '';
+        // Καθαρισμός των containers στα πλαίσια
+        document.getElementById('target-noun').querySelector('.word-container').innerHTML = '';
+        document.getElementById('target-adj').querySelector('.word-container').innerHTML = '';
+        
+        // Επιλογή 10 τυχαίων ουσιαστικών και 10 τυχαίων επίθετων (Σύνολο 20)
+        const selectedNouns = getRandom(masterNouns, 10).map(text => ({ text, type: 'noun' }));
+        const selectedAdjs = getRandom(masterAdjectives, 10).map(text => ({ text, type: 'adj' }));
+        
+        const currentWords = [...selectedNouns, ...selectedAdjs].sort(() => Math.random() - 0.5);
+        wordsLeft = currentWords.length;
+
+        currentWords.forEach((item, index) => {
+            const el = document.createElement('div');
+            el.innerText = item.text;
+            el.className = 'word';
+            el.draggable = true;
+            el.id = 'word-' + index;
+            el.dataset.type = item.type;
+            el.addEventListener('dragstart', drag);
+            pool.appendChild(el);
+        });
+    }
+
+    // Συνάρτηση για τυχαία επιλογή από τη δεξαμενή
+    function getRandom(arr, n) {
+        let result = new Array(n),
+            len = arr.length,
+            taken = new Array(len);
+        if (n > len) n = len;
+        while (n--) {
+            var x = Math.floor(Math.random() * len);
+            result[n] = arr[x in taken ? taken[x] : x];
+            taken[x] = --len in taken ? taken[len] : len;
+        }
+        return result;
+    }
+
+    function allowDrop(ev) {
+        ev.preventDefault();
+        ev.currentTarget.classList.add('over');
+    }
+
+    function dragLeave(ev) {
+        ev.currentTarget.classList.remove('over');
+    }
+
+    function drag(ev) {
+        ev.dataTransfer.setData("text", ev.target.id);
+    }
+
+    function drop(ev) {
+        ev.preventDefault();
+        ev.currentTarget.classList.remove('over');
+        const data = ev.dataTransfer.getData("text");
+        const draggedElement = document.getElementById(data);
+        if (!draggedElement) return;
+
+        const type = draggedElement.dataset.type;
+        const zoneId = ev.currentTarget.id;
+        
+        const isCorrect = (type === 'noun' && zoneId === 'target-noun') || 
+                          (type === 'adj' && zoneId === 'target-adj');
+
+        if (isCorrect) {
+            draggedElement.classList.add('correct');
+            draggedElement.innerHTML += " 👍";
+            draggedElement.draggable = false;
+            ev.currentTarget.querySelector('.word-container').appendChild(draggedElement);
+            wordsLeft--;
+            if (wordsLeft === 0) setTimeout(showEndScreen, 800);
+        } else {
+            draggedElement.classList.add('wrong');
+            setTimeout(() => {
+                draggedElement.classList.remove('wrong');
+                const pool = document.getElementById('words-pool');
+                const children = pool.children;
+                const randomIndex = Math.floor(Math.random() * (children.length + 1));
+                pool.insertBefore(draggedElement, children[randomIndex]);
+            }, 1200);
+        }
+    }
+
+    function showEndScreen() {
+        document.getElementById('game-screen').classList.remove('active');
+        document.getElementById('end-screen').classList.add('active');
+        confetti({ particleCount: 180, spread: 80, origin: { y: 0.6 } });
+    }
+
+    function resetGame() {
+        startGame();
+    }
+</script>
